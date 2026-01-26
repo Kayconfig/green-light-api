@@ -13,6 +13,9 @@ func (app *application) routes() http.Handler {
 	router.Get("/v1/movies/{id}", app.showMovieHandler)
 	router.Post("/v1/movies", app.createMovieHandler)
 
-	return router
+	router.NotFound(app.notFoundResponse)
+	router.MethodNotAllowed(app.methodNotAllowedResponse)
+
+	return app.recoverPanic(router)
 
 }
