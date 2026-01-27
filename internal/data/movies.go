@@ -46,7 +46,7 @@ func (m MovieModel) Insert(movie *Movie) error {
 func (m MovieModel) Get(id int64) (*Movie, error) {
 	var movie Movie
 	query := `
-	select pg_sleep(8),id,created_at,title, year, runtime, genres, version, updated_at
+	select id,created_at,title, year, runtime, genres, version, updated_at
 	from movies
 	where id = $1
 	`
@@ -57,7 +57,6 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	defer cancel()
 
 	err := m.DB.QueryRowContext(ctx, query, id).Scan(
-		&[]byte{},
 		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
