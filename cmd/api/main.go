@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/kayconfig/green-light-api/internal/data"
+	"github.com/kayconfig/green-light-api/migrations"
 	_ "github.com/lib/pq"
 )
 
@@ -30,6 +32,7 @@ type config struct {
 type application struct {
 	config config
 	logger *slog.Logger
+	models data.Models
 }
 
 func main() {
@@ -41,7 +44,7 @@ func main() {
 
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("DATABASE_CONNECTION_STRING"), "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", os.Getenv("GOOSE_DBSTRING"), "PostgreSQL DSN")
 
 	// Read the connection pool settings from command-line flags into the config struct.
 	// Notice that the default values we're using are the ones we discussed above?
@@ -64,6 +67,15 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
+	}
+
+	// run migration, if env=development
+	if cfg.env == "development" {
+		err := app.RunMigration(db, migrations.FS, ".")
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	mux := http.NewServeMux()

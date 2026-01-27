@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/kayconfig/green-light-api/internal/validator"
@@ -14,7 +15,27 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime"`    // Movie runtime (in minutes)
 	Genres    []string  `json:"genres"`     // Slice of genres for the movie (romance, comedy, etc.)
 	Version   int32     `json:"version"`    // The version number starts at 1 and will be incremented each
-	UpdatedAt time.Time `json:"updated_at`  // time the movie information is updated
+	UpdatedAt time.Time `json:"updated_at"` // time the movie information is updated
+}
+
+type MovieModel struct {
+	DB *sql.DB
+}
+
+func (m MovieModel) Insert(movie *Movie) error {
+	return nil
+}
+
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	return nil, nil
+}
+
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+func (m MovieModel) Delete(id int64) error {
+	return nil
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {
