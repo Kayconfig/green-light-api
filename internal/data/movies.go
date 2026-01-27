@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -30,7 +31,10 @@ func (m MovieModel) Insert(movie *Movie) error {
 	VALUES($1, $2, $3, $4)
 	RETURNING id, created_at, version, updated_at
 	`
-	err := m.DB.QueryRow(query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)).Scan(
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)).Scan(
 		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Version,
@@ -42,11 +46,19 @@ func (m MovieModel) Insert(movie *Movie) error {
 func (m MovieModel) Get(id int64) (*Movie, error) {
 	var movie Movie
 	query := `
-	select id,created_at,title, year, runtime, genres, version, updated_at
+	select pg_sleep(8),id,created_at,title, year, runtime, genres, version, updated_at
 	from movies
 	where id = $1
 	`
-	err := m.DB.QueryRow(query, id).Scan(&movie.ID,
+
+	// create Context with 3-second timeout deadline
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	// use defer to make sure we cancel the context before the Get() method returns
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
+		&[]byte{},
+		&movie.ID,
 		&movie.CreatedAt,
 		&movie.Title,
 		&movie.Year,
@@ -81,7 +93,10 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.ID,
 		movie.Version,
 	}
-	err := m.DB.QueryRow(query, args...).Scan(&movie.Version, &movie.UpdatedAt)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version, &movie.UpdatedAt)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -105,7 +120,10 @@ func (m MovieModel) Delete(id int64) error {
 	where id = $1
 	`
 
-	result, err := m.DB.Exec(query, id)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}
