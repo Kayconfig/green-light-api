@@ -12,6 +12,8 @@ func (app *application) routes() http.Handler {
 	router.Get("/v1/healthcheck", app.healthCheckHandler)
 	router.Get("/v1/movies/{id}", app.showMovieHandler)
 	router.Post("/v1/movies", app.createMovieHandler)
+	router.Patch("/v1/movies/{id}", app.updateMovieHandler)
+	router.Delete("/v1/movies/{id}", app.deleteMovieHandler)
 
 	router.NotFound(app.notFoundResponse)
 	router.MethodNotAllowed(app.methodNotAllowedResponse)
