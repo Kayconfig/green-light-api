@@ -18,7 +18,7 @@ type Movie struct {
 	Runtime   Runtime   `json:"runtime"`    // Movie runtime (in minutes)
 	Genres    []string  `json:"genres"`     // Slice of genres for the movie (romance, comedy, etc.)
 	Version   int32     `json:"version"`    // The version number starts at 1 and will be incremented each
-	UpdatedAt time.Time `json:"updated_at"` // time the movie information is updated
+	UpdatedAt time.Time `json:"-"`          // time the movie information is updated
 }
 
 type MovieModel struct {
@@ -136,6 +136,53 @@ func (m MovieModel) Delete(id int64) error {
 		return ErrRecordNotFound
 	}
 	return nil
+}
+
+func (m MovieModel) GetAll(title string, genres []string, filters Filters) ([]*Movie, error) {
+	query := `
+	SELECT id, created_at, updated_at, title, year, runtime, genres, version
+	FROM movies
+	WHERE (LOWER(title) = LOWER($1)  OR $1 = '')
+	AND (genres @> $2 OR $2 = '{}')
+	ORDER BY created_at DESC
+	`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(genres))
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	movies := []*Movie{}
+
+	for rows.Next() {
+		var movie Movie
+
+		err := rows.Scan(
+			&movie.ID,
+			&movie.CreatedAt,
+			&movie.UpdatedAt,
+			&movie.Title,
+			&movie.Year,
+			&movie.Runtime,
+			pq.Array(&movie.Genres),
+			&movie.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+		movies = append(movies, &movie)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return movies, nil
 }
 
 func ValidateMovie(v *validator.Validator, movie *Movie) {

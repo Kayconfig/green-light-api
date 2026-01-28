@@ -21,12 +21,12 @@ func (app *application) RunMigration(db *sql.DB, migrationFS fs.FS, dir string) 
 	defer func() {
 		goose.SetBaseFS(nil)
 	}()
-	app.logger.Info("running migration")
+	app.logger.Info("running migration...")
 	err := Migrate(db, dir)
 	if err != nil {
 		app.logger.Error(err.Error())
 		return err
 	}
-	app.logger.Info("migration successful")
+	app.logger.Info("migration successful!")
 	return nil
 }

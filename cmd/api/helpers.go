@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/kayconfig/green-light-api/internal/validator"
 )
 
 type envelope map[string]any
@@ -88,4 +90,50 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	w.WriteHeader(status)
 	w.Write(jsonEncoding)
 	return nil
+}
+
+// the readstring() helper returns a string value from the query string, or the provided
+// default value if no matching key could not be found
+func (app *application) readString(queryString url.Values, key string, defaultValue string) string {
+	val := queryString.Get(key)
+
+	if val == "" {
+		return defaultValue
+	}
+
+	// otherwise return the string.
+	return val
+}
+
+// The readCSV() helper reads a string value from the query string and then
+// splits it into a slice on the comma character. If no matching
+// key could be found, it returns the provided default value
+func (app *application) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	csv := qs.Get(key)
+	if csv == "" {
+		return defaultValue
+	}
+
+	return strings.Split(csv, ",")
+}
+
+// The readInt() helper reads a string value from the query string
+// and converts it to an integer before returning. if no matching key
+// could be found it returns the provided default value. If the value
+// couldn't be converted to an integer, then we record an
+// error message in the provided Validator instance.
+func (app *application) readInt(qs url.Values, key string, defaultValue int, v *validator.Validator) int {
+	val := qs.Get(key)
+
+	if val == "" {
+		return defaultValue
+	}
+
+	i, err := strconv.Atoi(val)
+	if err != nil {
+		v.AddError(key, "must be a positive integer value")
+		return defaultValue
+	}
+
+	return i
 }
