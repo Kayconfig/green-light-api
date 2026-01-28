@@ -19,6 +19,6 @@ func (app *application) routes() http.Handler {
 	router.NotFound(app.notFoundResponse)
 	router.MethodNotAllowed(app.methodNotAllowedResponse)
 
-	return app.recoverPanic(router)
+	return app.recoverPanic(app.rateLimit(router))
 
 }
