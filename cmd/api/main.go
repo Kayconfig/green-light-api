@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -42,10 +43,11 @@ type config struct {
 }
 
 type application struct {
-	config config
+	config *config
 	logger *slog.Logger
 	models data.Models
 	mailer *mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
@@ -108,7 +110,7 @@ func main() {
 	}
 
 	app := &application{
-		config: cfg,
+		config: &cfg,
 		logger: logger,
 		models: data.NewModels(db),
 		mailer: mailer,
