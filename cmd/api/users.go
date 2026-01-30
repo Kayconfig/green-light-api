@@ -8,6 +8,16 @@ import (
 	"github.com/kayconfig/green-light-api/internal/validator"
 )
 
+func sendMailToUser(app *application, user *data.User, template string) {
+	// a deferred function that uses recover() to catch panic.
+	// then log an error message instead of terminating the application
+
+	err := app.mailer.Send(user.Email, template, user)
+	if err != nil {
+		app.logger.Error(err.Error())
+	}
+}
+
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Name     string `json:"name"`
@@ -44,14 +54,16 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 		switch {
 		case errors.Is(err, data.ErrDuplicateEmail):
 			v.AddError("email", "a user with this email address already exists")
+			app.background(func() { sendMailToUser(app, user, "suspicious_login.tmpl") })
 			app.failedValidationResponse(w, r, v.Errors)
 		default:
 			app.serverErrorResponse(w, r, err)
 		}
 		return
 	}
+	app.background(func() { sendMailToUser(app, user, "user_welcome.tmpl") })
 
-	err = app.writeJSON(w, http.StatusCreated, envelope{"user": user}, nil)
+	err = app.writeJSON(w, http.StatusAccepted, envelope{"user": user}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}

@@ -6,10 +6,12 @@ import (
 	"flag"
 	"log/slog"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/kayconfig/green-light-api/internal/data"
+	"github.com/kayconfig/green-light-api/internal/mailer"
 	"github.com/kayconfig/green-light-api/migrations"
 	_ "github.com/lib/pq"
 )
@@ -30,19 +32,34 @@ type config struct {
 		burst   int
 		enabled bool
 	}
+	smtp struct {
+		host     string
+		port     int
+		username string
+		password string
+		sender   string
+	}
 }
 
 type application struct {
 	config config
 	logger *slog.Logger
 	models data.Models
+	mailer *mailer.Mailer
 }
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	logErrAndExit := func(err error) {
+		logger.Error(err.Error())
+		os.Exit(1)
+
+	}
 	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		logErrAndExit(err)
 	}
+
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 4000, "API server port")
@@ -59,36 +76,55 @@ func main() {
 	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 4, "Rate limiter maximum burst")
 	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 
-	flag.Parse()
+	//SMTP
+	flag.StringVar(&cfg.smtp.host, "smtp-host", os.Getenv("SMTP_HOST"), "SMTP host")
+	SMTP_PORT, err := strconv.Atoi(os.Getenv("SMTP_PORT"))
+	if err != nil {
+		logErrAndExit(err)
+	}
+	flag.IntVar(&cfg.smtp.port, "smtp-port", SMTP_PORT, "SMTP port")
+	flag.StringVar(&cfg.smtp.username, "smtp-username", os.Getenv("SMTP_USERNAME"), "SMTP username")
+	flag.StringVar(&cfg.smtp.password, "smtp-password", os.Getenv("SMTP_PASSWORD"), "SMTP password")
+	flag.StringVar(&cfg.smtp.sender, "smtp-sender", os.Getenv("SMTP_SENDER"), "SMTP sender")
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	flag.Parse()
 
 	db, err := openDB(cfg)
 	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
+		logErrAndExit(err)
 	}
 	defer db.Close()
 	logger.Info("database connection pool established")
+
+	mailer, err := mailer.New(
+		cfg.smtp.host,
+		cfg.smtp.port,
+		cfg.smtp.username,
+		cfg.smtp.password,
+		cfg.smtp.sender,
+	)
+	if err != nil {
+		logErrAndExit(err)
+	}
 
 	app := &application{
 		config: cfg,
 		logger: logger,
 		models: data.NewModels(db),
+		mailer: mailer,
 	}
 
 	// run migration, if env=development
 	if cfg.env == "development" {
 		err := app.RunMigration(db, migrations.FS, ".")
 		if err != nil {
-			panic(err)
+			logErrAndExit(err)
 		}
 	}
 
 	err = app.serve()
 	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
+		logErrAndExit(err)
 	}
 }
 

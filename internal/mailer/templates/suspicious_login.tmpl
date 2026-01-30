@@ -1,0 +1,33 @@
+{{define "subject"}}Greenlight - Suspicious Signup Attempt{{end}}
+
+{{define "plainBody"}}
+Hi {{.Name}},
+
+We hope you are doing well? 
+There is a suspicious signup attempt on your account, please try to login if this attempt was from you.
+
+You can also reach out, if you have any enquiries
+
+Thanks,
+
+The Greenlight Team
+{{end}}
+
+{{define "htmlBody"}}
+<!doctype html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+
+<body>
+    <p>Hi {{.Name}} </p>
+    <p>We hope you are doing well? 
+    There is a suspicious signup attempt on your account, please try to login if this attempt was from you.</p>
+    <p>You can also reach out, if you have any enquiries</p>
+    <p>Thanks,</p>
+    <p>The Greenlight Team</p>
+</body>
+</html>
+{{end}}
