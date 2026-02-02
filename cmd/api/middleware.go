@@ -170,3 +170,9 @@ func (app *application) requireActivatedUser(next http.Handler) http.Handler {
 	})
 	return app.requireAuthenticatedUser(fn)
 }
+
+func (app *application) requirePermission(code string, next http.Handler) http.Handler {
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	return app.requireActivatedUser(fn)
+}
