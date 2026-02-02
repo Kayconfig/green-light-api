@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/kayconfig/green-light-api/internal/data"
 )
 
 func (app *application) routes() http.Handler {
@@ -14,11 +15,12 @@ func (app *application) routes() http.Handler {
 	// movies
 	router.Group(func(movieRouter chi.Router) {
 		movieRouter.Use(app.requireActivatedUser)
-		movieRouter.Get("/v1/movies/{id}", app.showMovieHandler)
-		movieRouter.Post("/v1/movies", app.createMovieHandler)
-		movieRouter.Patch("/v1/movies/{id}", app.updateMovieHandler)
-		movieRouter.Delete("/v1/movies/{id}", app.deleteMovieHandler)
-		movieRouter.Get("/v1/movies", app.listMoviesHandler)
+
+		movieRouter.Get("/v1/movies/{id}", app.requirePermission(data.PermissionsCode.MoviesRead, app.showMovieHandler))
+		movieRouter.Get("/v1/movies", app.requirePermission(data.PermissionsCode.MoviesRead, app.listMoviesHandler))
+		movieRouter.Post("/v1/movies", app.requirePermission(data.PermissionsCode.MoviesWrite, app.createMovieHandler))
+		movieRouter.Patch("/v1/movies/{id}", app.requirePermission(data.PermissionsCode.MoviesWrite, app.updateMovieHandler))
+		movieRouter.Delete("/v1/movies/{id}", app.requirePermission(data.PermissionsCode.MoviesWrite, app.deleteMovieHandler))
 	})
 
 	// users
