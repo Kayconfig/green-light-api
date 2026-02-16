@@ -35,9 +35,10 @@ func (app *application) routes() http.Handler {
 	router.MethodNotAllowed(app.methodNotAllowedResponse)
 
 	return app.recoverPanic(
-		app.rateLimit(
-			app.authenticate(router),
-		),
-	)
+		app.enableCORS(
+			app.rateLimit(
+				app.authenticate(router),
+			),
+		))
 
 }
