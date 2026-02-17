@@ -17,11 +17,14 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kayconfig/green-light-api/internal/data"
 	"github.com/kayconfig/green-light-api/internal/mailer"
+	"github.com/kayconfig/green-light-api/internal/vcs"
 	"github.com/kayconfig/green-light-api/migrations"
 	_ "github.com/lib/pq"
 )
 
-const version = "1.0.0"
+var (
+	version = vcs.Version()
+)
 
 type config struct {
 	port int
