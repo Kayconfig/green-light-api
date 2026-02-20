@@ -24,14 +24,14 @@ run/api:
 	go run ./cmd/api
 
 ## db/migration/new: creates a new migration, the 'name' argument is used in the migration file created.
-.PHONY: db/migrations/new
+.PHONY: db/migration/new
 db/migration/new:
 	goose -s create ${name} sql
 
 ## db/migration/up: run migrations
-.PHONY: db/migrations/up
+.PHONY: db/migration/up
 db/migration/up: confirm
-	goose -dir ${GOOSE_MIGRATION_DIR} ${GOOSE_DRIVER}  ${GOOSE_DBSTRING} 
+	goose up
 
 
 ####################################
