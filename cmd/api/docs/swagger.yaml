@@ -1,0 +1,7 @@
+info:
+  contact: {}
+  description: A movie restful API called greenlight
+  title: Greenlight Restful API
+  version: 1.1.0
+paths: {}
+swagger: "2.0"

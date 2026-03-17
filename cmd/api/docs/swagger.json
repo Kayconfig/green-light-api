@@ -1,0 +1,10 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "A movie restful API called greenlight",
+        "title": "Greenlight Restful API",
+        "contact": {},
+        "version": "1.1.0"
+    },
+    "paths": {}
+}

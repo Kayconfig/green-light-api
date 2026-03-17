@@ -19,6 +19,13 @@ func sendMailToUser(app *application, user *data.User, template string) {
 	}
 }
 
+// registerUser godoc
+// @Summary register a user
+// @Descriptioni create user account and send back authentication token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 201
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Name     string `json:"name"`
