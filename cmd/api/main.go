@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"expvar"
 	"flag"
 	"fmt"
@@ -11,7 +9,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -26,40 +23,9 @@ var (
 	version = vcs.Version()
 )
 
-type config struct {
-	port int
-	env  string
-	db   struct {
-		dsn          string
-		maxOpenConns int
-		maxIdleConns int
-		maxIdleTime  time.Duration
-	}
-	limiter struct {
-		rps     float64
-		burst   int
-		enabled bool
-	}
-	smtp struct {
-		host     string
-		port     int
-		username string
-		password string
-		sender   string
-	}
-	cors struct {
-		trustedOrigins []string
-	}
-}
-
-type application struct {
-	config *config
-	logger *slog.Logger
-	models data.Models
-	mailer *mailer.Mailer
-	wg     sync.WaitGroup
-}
-
+// @title Greenlight Restful API
+// @version 1.1.0
+// @description A movie restful API called greenlight
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	logErrAndExit := func(err error) {
@@ -107,6 +73,8 @@ func main() {
 
 	displayVersion := flag.Bool("version", false, "Display version and exit")
 
+	flag.StringVar(&cfg.url, "api-url", fmt.Sprintf("http://localhost:%d", cfg.port), "The url for this api")
+
 	flag.Parse()
 
 	if *displayVersion {
@@ -145,12 +113,12 @@ func main() {
 		logErrAndExit(err)
 	}
 
-	app := &application{
-		config: &cfg,
-		logger: logger,
-		models: data.NewModels(db),
-		mailer: mailer,
-	}
+	app := NewApplication(
+		&cfg,
+		logger,
+		data.NewModels(db),
+		mailer,
+	)
 
 	// run migration, if env=development
 	if cfg.env == "development" {
@@ -164,40 +132,4 @@ func main() {
 	if err != nil {
 		logErrAndExit(err)
 	}
-}
-
-func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", cfg.db.dsn)
-	if err != nil {
-		return nil, err
-	}
-	// set the maximum number of open (in-use + idle) connections in the ppol.
-	// a value less than or equal to zero will mean there is no limit
-	db.SetMaxOpenConns(cfg.db.maxOpenConns)
-
-	//Set the max number of idle connections in the pool.
-	// value less than or equal to zero mean there is no limit
-	db.SetMaxIdleConns(cfg.db.maxIdleConns)
-
-	// set the maximum idle timeout for connections in the pool.
-	// duration less than or equal to zero will mean that the
-	// connectinos are not closed due to their idle time
-	db.SetConnMaxIdleTime(cfg.db.maxIdleTime)
-
-	delayInSeconds := 5 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), delayInSeconds)
-	defer cancel()
-
-	//use pingContext to establish new connection to db,
-	//passing in the context we created above. if connection
-	// couldn't be established within the specified delayInSeconds
-	// the following will return an error
-	// if we get error, we close the connection pool and return error
-	err = db.PingContext(ctx)
-	if err != nil {
-		db.Close()
-		return nil, err
-	}
-
-	return db, nil
 }

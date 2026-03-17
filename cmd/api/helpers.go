@@ -16,6 +16,8 @@ import (
 
 type envelope map[string]any
 
+const jsonContentType = "application/json"
+
 func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 	r.Body = http.MaxBytesReader(w, r.Body, 1_048_567)
 	decoder := json.NewDecoder(r.Body)
@@ -30,7 +32,7 @@ func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any
 		fmt.Println(err.Error())
 		switch {
 		case errors.As(err, &syntaxError):
-			return fmt.Errorf("body contains badly-formed JSON (at character %d)", syntaxError.Offset)
+			return fmt.Errorf("body contains badly formed JSON (at character %d)", syntaxError.Offset)
 		case errors.Is(err, io.ErrUnexpectedEOF):
 			return errors.New("body contains badly formed JSON")
 		case errors.As(err, &unmarshalTypeError):
@@ -86,7 +88,7 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 		w.Header()[key] = value
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", jsonContentType)
 	w.WriteHeader(status)
 	w.Write(jsonEncoding)
 	return nil

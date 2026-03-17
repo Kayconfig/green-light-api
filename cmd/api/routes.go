@@ -2,16 +2,22 @@ package main
 
 import (
 	"expvar"
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/kayconfig/green-light-api/internal/data"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func (app *application) routes() http.Handler {
 	router := chi.NewRouter()
 
 	router.Get("/v1/healthcheck", app.healthCheckHandler)
+
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL(fmt.Sprintf("%s/swagger/doc.json", app.config.url)),
+	))
 
 	// movies
 	router.Group(func(movieRouter chi.Router) {
