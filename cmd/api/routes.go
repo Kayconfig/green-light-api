@@ -15,10 +15,6 @@ func (app *application) routes() http.Handler {
 
 	router.Get("/v1/healthcheck", app.healthCheckHandler)
 
-	router.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL(fmt.Sprintf("%s/swagger/doc.json", app.config.url)),
-	))
-
 	// movies
 	router.Group(func(movieRouter chi.Router) {
 		movieRouter.Use(app.requireActivatedUser)
@@ -36,21 +32,29 @@ func (app *application) routes() http.Handler {
 	router.Put("/v1/users/activated", app.activateUserHandler)
 	router.Put("/v1/users/password", app.updatePasswordHandler)
 
-	//authentication
+	// authentication
 	router.Post("/v1/tokens/authentication", app.createAuthenticationTokenHandler)
 	router.Post("/v1/tokens/password-reset", app.passwordResetHandler)
 
-	//metrics
+	// metrics
 	router.Get("/v1/metrics", expvar.Handler().ServeHTTP)
 
 	router.NotFound(app.notFoundResponse)
 	router.MethodNotAllowed(app.methodNotAllowedResponse)
 
-	return app.metrics(app.recoverPanic(
-		app.enableCORS(
-			app.rateLimit(
-				app.authenticate(router),
-			),
-		)))
+	// Wrap all API routes with the full middleware chain (including rate limiter).
+	// Swagger routes are registered on a separate top-level router so they bypass rate limiting.
+	rateLimited := app.metrics((app.enableCORS(
+		app.rateLimit(
+			app.authenticate(router),
+		),
+	)))
 
+	top := chi.NewRouter()
+	top.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL(fmt.Sprintf("%s/swagger/doc.json", app.config.url)),
+	))
+	top.Mount("/", rateLimited)
+
+	return app.recoverPanic(top)
 }

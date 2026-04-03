@@ -26,6 +26,18 @@ func sendMailToUser(app *application, user *data.User, template string) {
 // @Accept json
 // @Produce json
 // @Success 201
+// registerUserHandler godoc
+// @Summary      Register a user
+// @Description  Creates a new user account and sends an activation email. The account starts inactive and must be activated before logging in.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      registerUserRequest  true  "User registration details"
+// @Success      202   {object}  userResponse
+// @Failure      400   {object}  errorResponse
+// @Failure      422   {object}  validationErrorResponse
+// @Failure      500   {object}  errorResponse
+// @Router       /v1/users [post]
 func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Name     string `json:"name"`
@@ -104,6 +116,18 @@ func (app *application) registerUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// sendActivationTokenHandler godoc
+// @Summary      Resend activation email
+// @Description  Sends a new activation email to the given address if the account exists and is not yet activated. Always returns 200 to prevent email enumeration.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      sendActivationTokenRequest  true  "Email address"
+// @Success      200   {object}  messageResponse
+// @Failure      400   {object}  errorResponse
+// @Failure      422   {object}  validationErrorResponse
+// @Failure      500   {object}  errorResponse
+// @Router       /v1/users/verification [post]
 func (app *application) sendActivationTokenHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email string `json:"email"`
@@ -166,6 +190,19 @@ func (app *application) sendActivationTokenHandler(w http.ResponseWriter, r *htt
 	}
 }
 
+// activateUserHandler godoc
+// @Summary      Activate a user account
+// @Description  Activates a user account using the 26-character token sent to their email. The token is consumed on first use.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      activateUserRequest  true  "Activation token"
+// @Success      200   {object}  userResponse
+// @Failure      400   {object}  errorResponse
+// @Failure      409   {object}  errorResponse
+// @Failure      422   {object}  validationErrorResponse
+// @Failure      500   {object}  errorResponse
+// @Router       /v1/users/activated [put]
 func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		TokenPlaintext string `json:"token"`
@@ -222,6 +259,20 @@ func (app *application) activateUserHandler(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// passwordResetHandler godoc
+// @Summary      Request a password reset
+// @Description  Sends a password reset email to the given address. The account must exist and be activated.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      passwordResetRequest  true  "Email address"
+// @Success      202   {object}  messageResponse
+// @Failure      400   {object}  errorResponse
+// @Failure      403   {object}  errorResponse
+// @Failure      404   {object}  errorResponse
+// @Failure      422   {object}  validationErrorResponse
+// @Failure      500   {object}  errorResponse
+// @Router       /v1/tokens/password-reset [post]
 func (app *application) passwordResetHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email string `json:"email"`
@@ -288,6 +339,19 @@ func (app *application) passwordResetHandler(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// updatePasswordHandler godoc
+// @Summary      Reset password
+// @Description  Updates the user's password using a valid password reset token (valid for 15 minutes).
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      updatePasswordRequest  true  "Reset token and new password"
+// @Success      200   {object}  messageResponse
+// @Failure      400   {object}  errorResponse
+// @Failure      409   {object}  errorResponse
+// @Failure      422   {object}  validationErrorResponse
+// @Failure      500   {object}  errorResponse
+// @Router       /v1/users/password [put]
 func (app *application) updatePasswordHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		PasswordResetToken string `json:"password_reset_token"`

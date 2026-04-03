@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	_ "github.com/kayconfig/green-light-api/cmd/api/docs"
 	"github.com/kayconfig/green-light-api/internal/data"
 	"github.com/kayconfig/green-light-api/internal/mailer"
 	"github.com/kayconfig/green-light-api/internal/vcs"
@@ -23,9 +24,14 @@ var (
 	version = vcs.Version()
 )
 
-// @title Greenlight Restful API
-// @version 1.1.0
-// @description A movie restful API called greenlight
+// @title           Greenlight Restful API
+// @version         1.1.0
+// @description     A movie management REST API. Movie endpoints require authentication via a Bearer token obtained from POST /v1/tokens/authentication.
+//
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Enter the token with the "Bearer " prefix, e.g. "Bearer abcde12345"
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	logErrAndExit := func(err error) {
@@ -73,7 +79,7 @@ func main() {
 
 	displayVersion := flag.Bool("version", false, "Display version and exit")
 
-	flag.StringVar(&cfg.url, "api-url", fmt.Sprintf("http://localhost:%d", cfg.port), "The url for this api")
+	flag.StringVar(&cfg.url, "api-url", os.Getenv("api-url"), "The url for this api")
 
 	flag.Parse()
 

@@ -9,6 +9,19 @@ import (
 	"github.com/kayconfig/green-light-api/internal/validator"
 )
 
+// createAuthenticationTokenHandler godoc
+// @Summary      Create an authentication token
+// @Description  Validates email and password credentials and returns a 24-hour Bearer token to use in the Authorization header.
+// @Tags         tokens
+// @Accept       json
+// @Produce      json
+// @Param        body  body      createAuthTokenRequest  true  "User credentials"
+// @Success      201   {object}  authTokenResponse
+// @Failure      400   {object}  errorResponse
+// @Failure      401   {object}  errorResponse
+// @Failure      422   {object}  validationErrorResponse
+// @Failure      500   {object}  errorResponse
+// @Router       /v1/tokens/authentication [post]
 func (app *application) createAuthenticationTokenHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email    string `json:"email"`
