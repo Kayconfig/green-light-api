@@ -8,6 +8,13 @@ import (
 	"github.com/kayconfig/green-light-api/internal/data"
 )
 
+type smtp struct {
+	host     string
+	port     int
+	username string
+	password string
+	sender   string
+}
 type config struct {
 	url  string
 	port int
@@ -23,13 +30,7 @@ type config struct {
 		burst   int
 		enabled bool
 	}
-	smtp struct {
-		host     string
-		port     int
-		username string
-		password string
-		sender   string
-	}
+	smtp
 	cors struct {
 		trustedOrigins []string
 	}

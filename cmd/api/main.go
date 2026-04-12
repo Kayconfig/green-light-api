@@ -14,7 +14,6 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/kayconfig/green-light-api/cmd/api/docs"
 	"github.com/kayconfig/green-light-api/internal/data"
-	"github.com/kayconfig/green-light-api/internal/mailer"
 	"github.com/kayconfig/green-light-api/internal/vcs"
 	"github.com/kayconfig/green-light-api/migrations"
 	_ "github.com/lib/pq"
@@ -108,13 +107,7 @@ func main() {
 		return time.Now().Unix()
 	}))
 
-	mailer, err := mailer.New(
-		cfg.smtp.host,
-		cfg.smtp.port,
-		cfg.smtp.username,
-		cfg.smtp.password,
-		cfg.smtp.sender,
-	)
+	mailer, err := NewMailer(cfg.smtp)
 	if err != nil {
 		logErrAndExit(err)
 	}
